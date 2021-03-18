@@ -1,0 +1,16 @@
+{{ template "header" . }}
+<main>
+    <article>
+
+        {{range .Items}}
+        <section>
+            <a href={{.Link}}>{{.Title}}</a>
+            <div> published:{{.CreationTime}}</div>
+            <a href={{.Link}}><img src={{.Image}}></a>
+        </section>
+
+        {{end}}
+    </article>
+
+</main>
+{{ template "footer" . }}
