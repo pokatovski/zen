@@ -32,6 +32,8 @@ type channelData struct {
 	Items []zenItem
 }
 
+var templates = template.Must(template.ParseGlob("templates/*"))
+
 func main() {
 	http.HandleFunc("/", index)
 	http.HandleFunc("/channel", channel)
@@ -46,7 +48,9 @@ func channel(w http.ResponseWriter, r *http.Request) {
 	channelPath := r.URL.Query().Get("path")
 	channelPath = html.EscapeString(channelPath)
 	if channelPath == "" {
-		log.Println("empty path")
+		err := errors.New("bad request: path is required")
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 	//zen channels has two types: named and unnamed(https://zen.yandex.ru/channel_name or https://zen.yandex.ru/id/1)
 	splittedPath := strings.Split(channelPath, "/")
@@ -59,7 +63,7 @@ func channel(w http.ResponseWriter, r *http.Request) {
 		//https://zen.yandex.ru/id/6022b7183646e21c6322408b
 		ch = splittedPath[4]
 	} else {
-		err := errors.New("bad request: path is required")
+		err := errors.New("bad path")
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -107,14 +111,8 @@ func channel(w http.ResponseWriter, r *http.Request) {
 
 		//fp := path.Join("templates", "channel.html")
 		chData := channelData{Items: zenCh.Items}
-		templates := []string{"templates/channel.html", "templates/header.html", "templates/footer.html"}
-		tmpl, err := template.ParseFiles(templates...)
+		err = templates.ExecuteTemplate(w, "channel.html", chData)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		if err := tmpl.Execute(w, chData); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -199,14 +197,10 @@ func detail(w http.ResponseWriter, r *http.Request) {
 }
 
 func index(w http.ResponseWriter, r *http.Request) {
-	templates := []string{"templates/index.html", "templates/header.html", "templates/footer.html"}
-	tmpl, err := template.ParseFiles(templates...)
+	//templates := []string{"templates/index.html", "templates/header.html", "templates/footer.html"}
+	err := templates.ExecuteTemplate(w, "index.html", nil)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
-	}
-
-	if err := tmpl.Execute(w, ""); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
